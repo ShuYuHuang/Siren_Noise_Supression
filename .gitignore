@@ -1,0 +1,12 @@
+runs/
+data/
+snapshots/
+checkpoints/
+__pycache__/
+*.pth
+*DS_Store
+**.ipynb_checkpoints
+*egg-info
+**Untitled*
+**submission*
+**prediction*
