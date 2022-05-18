@@ -46,8 +46,8 @@ transform = Compose(
             max_shift=0.8,
             **signal_kwargs),
         Gain( # louder or quieter
-            min_gain_in_db=-5.0,
-            max_gain_in_db=10.0,
+            min_gain_in_db=-1.0,
+            max_gain_in_db=5.0,
             **signal_kwargs),
     ]
 )
@@ -84,8 +84,8 @@ class SyntheticCallDataset(tud.IterableDataset):
         # Load data
         x_,sr_orig=torchaudio.load(fname,normalize=True)
         # Extend channel
-        if x_.shape[0]==1:
-            x_=torch.cat((x_,x_),dim=0)
+        if x_.shape[0]==2:
+            x_=x_.mean(dim=0, keepdim=True)
         # Resample
         if sr_orig==16000:
             x_=x_.to(self.device)
@@ -103,7 +103,7 @@ class SyntheticCallDataset(tud.IterableDataset):
             x_=transform(x_[None,...])[0]
         ## Padding if needed
         if len(x_[0])<self.signal_len:
-            x=torch.zeros((2,self.signal_len),dtype=torch.float32,device=self.device)
+            x=torch.zeros((1,self.signal_len),dtype=torch.float32,device=self.device)
             start_point=np.random.randint(0,self.signal_len-len(x_[0]))
             end_point=start_point+len(x_[0])
             x[:,start_point:end_point]=x_
@@ -131,5 +131,5 @@ class SyntheticCallDataset(tud.IterableDataset):
     def collate_fn(self,batch):
         signal,artifact,noise=[torch.stack([b[i] for b in batch],dim=0) for i in range(3)] 
         # Synthesize
-        x=self.resamp_16Kto8K(signal+artifact+noise)
+        x=self.resamp_16Kto8K(signal.detach()+artifact.detach()+noise.detach())
         return x,signal,artifact,noise

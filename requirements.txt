@@ -3,3 +3,4 @@ torch-audiomentations
 torchaudio
 julius
 librosa
+pesq

@@ -1,6 +1,7 @@
 runs/
 data/
 snapshots/
+snapshots*/
 checkpoints/
 __pycache__/
 *.pth
