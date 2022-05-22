@@ -4,3 +4,4 @@ torchaudio
 julius
 librosa
 pesq
+sounddevice
