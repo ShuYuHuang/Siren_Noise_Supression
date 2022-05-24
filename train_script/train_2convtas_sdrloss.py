@@ -90,6 +90,7 @@ if __name__ == "__main__":
         # Common keword arguments
         common_kwargs=dict(
             signal_len=L,
+            n_partitions=20,
             transform=ldr.transform,
             artifact_transform=ldr.artifact_noise_transform,
             noise_transform=ldr.artifact_noise_transform
@@ -113,8 +114,7 @@ if __name__ == "__main__":
 
         ####### Network #######
         # Form Network
-        network=ResidualConvTas(num_sources=3,
-                       enc_num_feats=128,
+        network=ResidualConvTas(enc_num_feats=128,
                        msk_num_hidden_feats=64,
                        device=torch.device("cuda"))
         # Loss cocmbo 1: MSE+SGD
@@ -152,7 +152,7 @@ if __name__ == "__main__":
                                         criterion,
                                         optimizer)
                     # print loss and take snapshots
-                    if (i_iter + 1) % 500 == 0:
+                    if (i_iter + 1) % 5000 == 0:
                         log['step']=i_iter+1
                         os.system(f"echo {log}")
                 os.system(f"echo {log}")
@@ -170,7 +170,7 @@ if __name__ == "__main__":
                                             network,
                                             criterion,
                                             optimizer)
-                        if (i_iter + 1) % 500 == 0:
+                        if (i_iter + 1) % 5000 == 0:
                             os.system(f"echo {log}")
                 os.system(f"echo {log}")
                 # early stop        

@@ -59,6 +59,7 @@ class SyntheticCallDataset(tud.IterableDataset):
                  artifact_files,
                  noise_files,
                  signal_len,
+                 n_partitions=None,
                  transform=None,
                  artifact_transform=None,
                  noise_transform=None):
@@ -68,6 +69,10 @@ class SyntheticCallDataset(tud.IterableDataset):
         self.artifact_files=artifact_files
         self.noise_files=noise_files
         self.signal_len=signal_len
+        if n_partitions:
+            self.n_partitions=n_partitions
+        else:
+            self.n_partitions=1
         # Initialize augmentation callable
         self.transform=transform
         self.artifact_transform = artifact_transform
@@ -78,8 +83,6 @@ class SyntheticCallDataset(tud.IterableDataset):
         self.resamp_44Kto16K=ResampleFrac(44100,16000).to(self.device)
         # Resamplers for synthetic signal generation
         self.resamp_16Kto8K=ResampleFrac(16000,8000).to(self.device)
-    def __len__(self):
-        return len(self.signal_files)
     def load_waveform(self,fname,transform=None):
         # Load data
         x_,sr_orig=torchaudio.load(fname,normalize=True)
@@ -113,7 +116,8 @@ class SyntheticCallDataset(tud.IterableDataset):
         
     def __iter__(self):
         # Random choice of signal, artifact, noise combinations
-        L=len(self)
+        L=len(self.signal_files)
+        partition_len=self.signal_len//self.n_partitions
         signal_files=np.random.permutation(self.signal_files)[:L]
         artifact_files=np.random.choice(self.artifact_files, size=L,replace=True)
         noise_files=np.random.choice(self.noise_files, size=L,replace=True)
@@ -127,8 +131,13 @@ class SyntheticCallDataset(tud.IterableDataset):
             # Load Noise
             noise=self.load_waveform(fname_n,self.noise_transform)
             
-            yield signal,artifact,noise
-    def collate_fn(self,batch):
+            for i in range(self.n_partitions):
+                yield (signal[:,i*partition_len:(i+1)*partition_len],
+                       artifact[:,i*partition_len:(i+1)*partition_len],
+                       noise[:,i*partition_len:(i+1)*partition_len])
+                
+                
+    def collate_fn(self,batch):        
         signal,artifact,noise=[torch.stack([b[i] for b in batch],dim=0) for i in range(3)] 
         # Synthesize
         x=self.resamp_16Kto8K(signal.detach()+artifact.detach()+noise.detach())
