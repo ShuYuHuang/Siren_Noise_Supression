@@ -90,7 +90,7 @@ if __name__ == "__main__":
         # Common keword arguments
         common_kwargs=dict(
             signal_len=L,
-            n_partitions=20,
+            n_partitions=5,
             transform=ldr.transform,
             artifact_transform=ldr.artifact_noise_transform,
             noise_transform=ldr.artifact_noise_transform
